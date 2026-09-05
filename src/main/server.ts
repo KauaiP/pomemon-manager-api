@@ -1,6 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { InMemoryPokemonRepository } from '@infrastructure/InMemoryPokemonRepository';
+import { Pokemon } from '@domain/entities/Pokemon';
 
 const app = express();
+
+const pokemonRepository = new InMemoryPokemonRepository();
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
@@ -9,82 +13,51 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(express.json());
-
-// Banco temporário em memória 
-interface Pokemon {
-  id: string;
-  name: string;
-  type: string;
-  hp: number;
-}
-
-const pokemons: Pokemon[] = [
-  { id: '1', name: 'Bulbasaur', type: 'Grass', hp: 45 },
-  { id: '4', name: 'Charmander', type: 'Fire', hp: 39 },
-  { id: '7', name: 'Squirtle', type: 'Water', hp: 44 },
-];
-
-app.get('/api/v1/pokemons/stats', (req: Request, res: Response) => {
-
-  const typesCount = pokemons.reduce((acc, pokemon) => {
-    const type = pokemon.type;
-    acc[type] = (acc[type] ?? 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  return res.status(200).json({
-    TotalPokemons: pokemons.length,
-    typesCount: typesCount,
-  });
-});
-
 //! https://localhost:3333/api/v1/pokemons?type=fire
 
-app.get('/api/v1/pokemons', (req: Request, res: Response) => {
+app.get('/api/v1/pokemons', async (req: Request, res: Response) => {
   const { type } = req.query;
 
-  // Se o cliente enviou um filtro por tipo (ex: ?type=Fire)
-  if (type) {
-    const filteredPokemons = pokemons.filter(
-      (p) => p.type.toLowerCase() === String(type).toLowerCase()
-    );
-    return res.status(200).json(filteredPokemons);
-  }
+  const result = type
+    ? await pokemonRepository.findByType(String(type))
+    : await pokemonRepository.findAll();
 
-  return res.status(200).json(pokemons);
+  return res.status(200).json(result);
 });
 
-//! https://localhost:3333/api/v1/pokemons/1
-
-app.get('/api/v1/pokemons/:id', (req: Request, res: Response) => {
-  const { id } = req.params; // Extrai o parâmetro da rota
-
-  const pokemon = pokemons.find((p) => p.id === id);
+app.get('/api/v1/pokemons/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const pokemon = await pokemonRepository.findById(String(id));
 
   if (!pokemon) {
-    return res.status(404).json({ error: 'Pokémon não encontrado no catálogo.' });
+    return res
+      .status(404)
+      .json({ error: 'Pokémon não encontrado no catálogo.' });
   }
 
   return res.status(200).json(pokemon);
 });
 
-
-app.post('/api/v1/pokemons', (req: Request, res: Response) => {
+app.post('/api/v1/pokemons', async (req: Request, res: Response) => {
   const { id, name, type, hp } = req.body;
 
   if (!id || !name || !type || !hp) {
     return res.status(400).json({
-      error: 'Campos obrigatórios ausentes: id, name, type e hp são necessários.'
+      error:
+        'Campos obrigatórios ausentes: id, name, type e hp são necessários.',
     });
   }
 
-  const pokemonExists = pokemons.some((p) => p.id === id);
-  if (pokemonExists) {
+  if (await pokemonRepository.exists(id)) {
     return res.status(400).json({ error: 'Pokémon com este ID já existe.' });
   }
 
-  const newPokemon: Pokemon = { id, name, type, hp: Number(hp) };
-  pokemons.push(newPokemon);
+  const newPokemon = await pokemonRepository.create({
+    id,
+    name,
+    type,
+    hp: Number(hp),
+  });
 
   return res.status(201).json({
     message: 'Pokémon cadastrado com sucesso!',
@@ -92,46 +65,59 @@ app.post('/api/v1/pokemons', (req: Request, res: Response) => {
   });
 });
 
-app.delete('/api/v1/pokemons/:id', (req: Request, res: Response) => {
+app.put('/api/v1/pokemons/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const pokemon = pokemons.find((p) => p.id === id);
-
-  if (!pokemon) {
-    return res.status(404).json({ error: 'Pokoemon com este ID não existe.' });
+  if (typeof id !== 'string') {
+    return res.status(400).json({ error: 'ID inválido.' });
   }
 
-  const index: number = pokemons.indexOf(pokemon);
-  pokemons.splice(index, 1);
-
-  return res.status(200).json({message: 'Pokemon deletado com sucesso'});
-
-});
-
-app.put('/api/v1/pokemons/:id', (req: Request, res: Response) => {
-  const { id } = req.params;
   const { name, type, hp } = req.body;
 
-  if (!id || !name || !type || !hp) {
+  if (!name && !type && !hp) {
     return res.status(400).json({
-      error: 'Campos obrigatórios ausentes: id, name, type e hp são necessários.'
+      error: 'Envie ao menos um campo para atualizar: name, type ou hp.',
     });
   }
 
-  const pokemon = pokemons.find((p) => p.id === id);
+  const dadosAtualizados: Partial<Pokemon> = {};
+  if (name) dadosAtualizados.name = name;
+  if (type) dadosAtualizados.type = type;
+  if (hp) dadosAtualizados.hp = Number(hp);
 
-  if (!pokemon) {
-    return res.status(404).json({ error: 'Pokoemon com este ID não existe.' });
+  const pokemonAtualizado = await pokemonRepository.update(
+    id,
+    dadosAtualizados,
+  );
+
+  if (!pokemonAtualizado) {
+    return res
+      .status(404)
+      .json({ error: 'Pokémon não encontrado no catálogo.' });
   }
 
-  const index: number = pokemons.indexOf(pokemon);
-  pokemons[index] = {...pokemons[index], name, type, hp};
-
   return res.status(200).json({
-    message: 'usuario atualzado com sucesso.',
-    data: pokemons[index],
-  }); 
-  
+    message: 'Pokémon atualizado com sucesso!',
+    data: pokemonAtualizado,
+  });
+});
+
+app.delete('/api/v1/pokemons/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (typeof id !== 'string') {
+    return res.status(400).json({ error: 'ID inválido.' });
+  }
+
+  const deletado = await pokemonRepository.delete(id);
+
+  if (!deletado) {
+    return res
+      .status(404)
+      .json({ error: 'Pokémon não encontrado no catálogo.' });
+  }
+
+  return res.status(204).send();
 });
 
 const PORT = 3333;
