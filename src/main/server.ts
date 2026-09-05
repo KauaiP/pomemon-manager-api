@@ -24,7 +24,21 @@ const pokemons: Pokemon[] = [
   { id: '7', name: 'Squirtle', type: 'Water', hp: 44 },
 ];
 
-//! https://localhost:3333/pokemons?type=fire
+app.get('/api/v1/pokemons/stats', (req: Request, res: Response) => {
+
+  const typesCount = pokemons.reduce((acc, pokemon) => {
+    const type = pokemon.type;
+    acc[type] = (acc[type] ?? 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return res.status(200).json({
+    TotalPokemons: pokemons.length,
+    typesCount: typesCount,
+  });
+});
+
+//! https://localhost:3333/api/v1/pokemons?type=fire
 
 app.get('/api/v1/pokemons', (req: Request, res: Response) => {
   const { type } = req.query;
@@ -40,7 +54,7 @@ app.get('/api/v1/pokemons', (req: Request, res: Response) => {
   return res.status(200).json(pokemons);
 });
 
-//! https://localhost:3333/pokemons/1
+//! https://localhost:3333/api/v1/pokemons/1
 
 app.get('/api/v1/pokemons/:id', (req: Request, res: Response) => {
   const { id } = req.params; // Extrai o parâmetro da rota
@@ -76,6 +90,48 @@ app.post('/api/v1/pokemons', (req: Request, res: Response) => {
     message: 'Pokémon cadastrado com sucesso!',
     data: newPokemon,
   });
+});
+
+app.delete('/api/v1/pokemons/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const pokemon = pokemons.find((p) => p.id === id);
+
+  if (!pokemon) {
+    return res.status(404).json({ error: 'Pokoemon com este ID não existe.' });
+  }
+
+  const index: number = pokemons.indexOf(pokemon);
+  pokemons.splice(index, 1);
+
+  return res.status(200).json({message: 'Pokemon deletado com sucesso'});
+
+});
+
+app.put('/api/v1/pokemons/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name, type, hp } = req.body;
+
+  if (!id || !name || !type || !hp) {
+    return res.status(400).json({
+      error: 'Campos obrigatórios ausentes: id, name, type e hp são necessários.'
+    });
+  }
+
+  const pokemon = pokemons.find((p) => p.id === id);
+
+  if (!pokemon) {
+    return res.status(404).json({ error: 'Pokoemon com este ID não existe.' });
+  }
+
+  const index: number = pokemons.indexOf(pokemon);
+  pokemons[index] = {...pokemons[index], name, type, hp};
+
+  return res.status(200).json({
+    message: 'usuario atualzado com sucesso.',
+    data: pokemons[index],
+  }); 
+  
 });
 
 const PORT = 3333;
