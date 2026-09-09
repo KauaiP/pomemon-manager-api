@@ -1,0 +1,326 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Pokemon Manager API",
+    "description": "API de gerenciamento de Pokémon desenvolvida para a disciplina Tópicos Especiais em Engenharia de Software (UFF)"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3333/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Pokemons",
+      "description": "Endpoints de gerenciamento de pokemons"
+    }
+  ],
+  "paths": {
+    "/api/v1/users/": {
+      "get": {
+        "tags": [
+          "Pokemons"
+        ],
+        "summary": "Lista todos os pokemons",
+        "description": "Endpoint para listar pokemons cadastrados, com filtro opcional por tipo.",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "Filtra os Pokémon por tipo (ex: Fire, Water)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de Pokémon retornada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Pokemon"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pokemons"
+        ],
+        "summary": "Cria um novo pokemon",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Pokémon cadastrado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Pokémon cadastrado com sucesso!"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Pokemon"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos obrigatórios ausentes ou ID já existente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PokemonInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "tags": [
+          "Pokemons"
+        ],
+        "summary": "Busca um pokemon pelo ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pokémon encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pokemon"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pokémon não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Pokemons"
+        ],
+        "summary": "Atualiza um pokemon existente",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pokémon atualizado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Pokémon atualizado com sucesso!"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Pokemon"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nenhum campo válido enviado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pokémon não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PokemonUpdateInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Pokemons"
+        ],
+        "summary": "Remove um pokemon do catálogo",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Pokémon removido com sucesso (sem conteúdo de retorno)."
+          },
+          "404": {
+            "description": "Pokémon não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Pokemon": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bulbasaur"
+          },
+          "type": {
+            "type": "string",
+            "example": "Grass"
+          },
+          "hp": {
+            "type": "number",
+            "example": 45
+          }
+        }
+      },
+      "PokemonInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "25"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pikachu"
+          },
+          "type": {
+            "type": "string",
+            "example": "Electric"
+          },
+          "hp": {
+            "type": "number",
+            "example": 35
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "hp"
+        ]
+      },
+      "PokemonUpdateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Pikachu"
+          },
+          "type": {
+            "type": "string",
+            "example": "Electric"
+          },
+          "hp": {
+            "type": "number",
+            "example": 35
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Pokémon não encontrado no catálogo."
+          }
+        }
+      }
+    }
+  }
+}
