@@ -1,4 +1,4 @@
-# Pokemon Manager API
+# APIkachu
 
 API RESTful para gerenciamento de um catálogo de Pokémon, desenvolvida em **TypeScript** com **Express**, seguindo os princípios de **Clean Architecture**.
 
