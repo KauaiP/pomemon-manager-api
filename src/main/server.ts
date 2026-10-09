@@ -1,6 +1,7 @@
 import express from 'express';
 import { setupSwagger } from '@main/config/swagger';
 import { pokemonRoutes } from '@infrastructure/http/routes/pokemon.routes';
+import { errorHandler } from '@infrastructure/http/middlewares/errorHandler';
 
 const app = express();
 
@@ -11,6 +12,8 @@ setupSwagger(app);
 
 // Registra os módulos de rotas sob seus respectivos prefixos REST
 app.use('/api/v1/users', pokemonRoutes);
+
+app.use(errorHandler);
 
 const PORT = 3333;
 

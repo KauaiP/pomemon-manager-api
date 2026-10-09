@@ -1,5 +1,6 @@
 import { IPokemonRepository } from '@domain/repositories/IPokemonRepository';
 import { Pokemon, PokemonProps } from '@domain/entities/Pokemon';
+import NotFoundError from '@domain/errors/NotFoundError';
 
 interface UpdatePokemonDTO {
   id: string;
@@ -13,7 +14,7 @@ export class UpdatePokemonUseCase {
     const pokemonExists = await this.pokemonRepository.findById(id);
 
     if (!pokemonExists) {
-      throw new Error('Pokemon com esse ID não encontrado');
+      throw new NotFoundError('Pokemon com esse ID não encontrado');
     }
 
     const updatedPokemon = await this.pokemonRepository.update(id, data);

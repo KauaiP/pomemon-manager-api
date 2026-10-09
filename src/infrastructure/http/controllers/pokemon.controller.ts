@@ -16,7 +16,6 @@ export class PokemonController {
   ) {}
 
   async create(req: Request, res: Response): Promise<Response> {
-    try {
       const { id, name, type, hp } = req.body;
       // eslint-disable-next-line prettier/prettier
       const pokemon = await this.createPokemonUseCase.execute({ id, name, type, hp });
@@ -25,12 +24,6 @@ export class PokemonController {
         message: 'Pokemon criado com sucesso!',
         data: { id: pokemon.id, name: pokemon.name, type: pokemon.type, hp: pokemon.hp },
       });
-    } catch (error) {
-      if (error instanceof Error) {
-        return res.status(400).json({ error: error.message });
-      }
-      return res.status(500).json({ error: 'Erro interno no servidor' });
-    }
   }
 
   async list(req: Request, res: Response): Promise<Response> {
@@ -47,7 +40,6 @@ export class PokemonController {
   }
 
   async getById(req: Request, res: Response): Promise<Response> {
-    try {
       const { id } = req.params;
       const pokemon = await this.getByIdPokemon.execute(String(id));
 
@@ -55,30 +47,16 @@ export class PokemonController {
         message: "Pokemon encontrado com sucesso",
         data: pokemon
       });
-    } catch(error) {
-      if (error instanceof Error) {
-        return res.status(400).json({error: error.message})
-      }
-      return res.status(500).json({error: 'erro interno no servidor'})
-    }
   }
 
   async delete(req: Request, res: Response): Promise<Response> {
-    try {
       const { id } = req.params;
       await this.deletePokemon.execute(String(id));
 
       return res.status(200).json({message: 'Pokemon deletado com sucesso'})
-    } catch(error) {
-      if (error instanceof Error) {
-        return res.status(400).json({error: error.message})
-      }
-      return res.status(500).json({error: 'erro interno no servidor'})
-    }
   }
 
   async update(req: Request, res: Response): Promise<Response> {
-  try {
     const { id } = req.params;
     const { name, type, hp } = req.body;
 
@@ -95,13 +73,6 @@ export class PokemonController {
       message: 'Pokemon atualizado com sucesso',
       data: pokemonUpdated,
     });
-  } catch (error) {
-    if (error instanceof Error) {
-      return res.status(400).json({ error: error.message });
-    }
-
-    return res.status(500).json({ error: 'erro interno no servidor' });
-  }
 }
 
 }

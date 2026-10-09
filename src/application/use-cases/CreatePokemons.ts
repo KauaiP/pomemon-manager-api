@@ -1,4 +1,5 @@
 import { Pokemon } from '@domain/entities/Pokemon';
+import ConflitError from '@domain/errors/ConflitError';
 import { IPokemonRepository } from '@domain/repositories/IPokemonRepository';
 
 interface CreatePokemonDTO {
@@ -15,7 +16,7 @@ export class CreatePokemonUseCase {
     const pokemonAlreadyExists = await this.pokemonReository.findById(data.id);
 
     if (pokemonAlreadyExists) {
-      throw new Error('Usuario com este id ja existe');
+      throw new ConflitError('Pokemon com este id ja existe');
     }
 
     const pokemon = new Pokemon(data);

@@ -1,4 +1,5 @@
 import { Pokemon } from '@domain/entities/Pokemon';
+import NotFoundError from '@domain/errors/NotFoundError';
 import { IPokemonRepository } from '@domain/repositories/IPokemonRepository';
 
 export class getByIdUseCase {
@@ -8,7 +9,9 @@ export class getByIdUseCase {
     const findPokemon = await this.pokemonRepository.findById(data);
 
     if (!findPokemon) {
-      throw new Error('Não existe pokemon com esse id');
+      throw new NotFoundError(
+        'Pokemon com esse ID não encontrado na base de dados',
+      );
     }
     return findPokemon;
   }
